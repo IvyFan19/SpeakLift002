@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakLift - Bookmarks</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F9F9F9;
+            color: #333333;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .primary-color {
+            color: #4A6FA5;
+        }
+        .secondary-color {
+            color: #47B881;
+        }
+        .accent-color {
+            color: #E94F37;
+        }
+        .primary-bg {
+            background-color: #4A6FA5;
+        }
+        .secondary-bg {
+            background-color: #47B881;
+        }
+        .accent-bg {
+            background-color: #E94F37;
+        }
+        .bookmark-header {
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #F9F9F9;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        .bookmark-section {
+            background-color: white;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .bookmark-item {
+            padding: 16px;
+            border-bottom: 1px solid #F0F0F0;
+            display: flex;
+            align-items: center;
+        }
+        .bookmark-item:last-child {
+            border-bottom: none;
+        }
+        .bookmark-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .category-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .category-vocabulary {
+            background-color: #E3F2FD;
+            color: #1976D2;
+        }
+        .category-expression {
+            background-color: #E8F5E9;
+            color: #388E3C;
+        }
+        .category-grammar {
+            background-color: #FFF3E0;
+            color: #F57C00;
+        }
+        .search-bar {
+            background-color: #FFFFFF;
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #E0E0E0;
+        }
+        .search-bar input {
+            background-color: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+            margin-left: 8px;
+            font-size: 14px;
+        }
+        
+        /* Navigation Tabs Styles */
+        .nav-tabs {
+            border-bottom: 1px solid #E0E0E0;
+            padding: 0 8px;
+        }
+        .nav-tab {
+            position: relative;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #9E9E9E;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            text-align: center;
+            flex: 1;
+        }
+        .nav-tab.active {
+            color: #4A6FA5;
+        }
+        .nav-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: transparent;
+            transition: background-color 0.3s ease;
+        }
+        .nav-tab.active .nav-indicator {
+            background-color: #4A6FA5;
+        }
+    </style>
+</head>
+<body class="px-4 pt-4 pb-4">
+    <!-- Bookmark Header -->
+    <div class="bookmark-header mb-4">
+        <h1 class="text-2xl font-bold mb-1">Bookmarks</h1>
+      
+    </div>
+    
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <i class="fas fa-search text-gray-500"></i>
+        <input type="text" placeholder="Search bookmarks...">
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs mb-4">
+        <div class="flex">
+            <div class="nav-tab active" data-category="all">
+                <span>All</span>
+                <div class="nav-indicator"></div>
+            </div>
+            <div class="nav-tab" data-category="vocabulary">
+                <span><i class="fas fa-book"></i></span>
+                <div class="nav-indicator"></div>
+            </div>
+            <div class="nav-tab" data-category="expression">
+                <span><i class="fas fa-quote-right"></i></span>
+                <div class="nav-indicator"></div>
+            </div>
+            <div class="nav-tab" data-category="grammar">
+                <span><i class="fas fa-check"></i></span>
+                <div class="nav-indicator"></div>
+            </div>
+        </div>
+    </div>
+    <div class="bookmark-section mb-6">
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Eloquent</h3>
+                    <span class="category-badge category-vocabulary">Vocabulary</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Meticulous</h3>
+                    <span class="category-badge category-vocabulary">Vocabulary</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Diligent</h3>
+                    <span class="category-badge category-vocabulary">Vocabulary</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Pragmatic</h3>
+                    <span class="category-badge category-vocabulary">Vocabulary</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Resilient</h3>
+                    <span class="category-badge category-vocabulary">Vocabulary</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Break the ice</h3>
+                    <span class="category-badge category-expression">Expression</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Hit the nail on the head</h3>
+                    <span class="category-badge category-expression">Expression</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Present Perfect vs. Simple Past</h3>
+                    <span class="category-badge category-grammar">Grammar</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bookmark-item">
+            <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-medium">Conditional Sentences</h3>
+                    <span class="category-badge category-grammar">Grammar</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- JavaScript for Navigation Tabs -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const bookmarkItems = document.querySelectorAll('.bookmark-item');
+            
+            // Add click event to each tab
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Get the category from data attribute
+                    const category = this.getAttribute('data-category');
+                    
+                    // Filter bookmark items based on category
+                    bookmarkItems.forEach(item => {
+                        const itemCategory = item.querySelector('.category-badge').textContent.toLowerCase();
+                        
+                        if (category === 'all' || itemCategory.includes(category)) {
+                            item.style.display = 'flex';
+                            // Add animation
+                            item.style.opacity = '0';
+                            setTimeout(() => {
+                                item.style.transition = 'opacity 0.3s ease';
+                                item.style.opacity = '1';
+                            }, 50);
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
