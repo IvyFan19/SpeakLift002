@@ -332,8 +332,6 @@ struct MessageView: View {
                     
                     // Controls overlay at bottom of bubble
                     HStack(spacing: 10) {
-                        Spacer()
-                        
                         if message.sender == .ai {
                             Button(action: onTranslate) {
                                 Image(systemName: "text.bubble")
@@ -346,7 +344,11 @@ struct MessageView: View {
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
+                            
+                            Spacer()
                         } else {
+                            Spacer()
+                            
                             Button(action: onPlayAudio) {
                                 Image(systemName: "speaker.wave.2")
                                     .font(.caption)
