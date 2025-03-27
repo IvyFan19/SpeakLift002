@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .specstory*
 .specstory/history/*.md
+
+# Local configuration files
+Config.swift

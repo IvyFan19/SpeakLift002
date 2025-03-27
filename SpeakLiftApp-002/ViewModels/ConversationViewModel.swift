@@ -18,9 +18,13 @@ class ConversationViewModel: ObservableObject {
     private var audioRecorder: AVAudioRecorder?
     private var audioPlayer: AVAudioPlayer?
     private var cancellables = Set<AnyCancellable>()
-    private var apiService: OpenAIService?
+    private var openAIService = OpenAIService()
+    private var recordingURL: URL?
     
     init(topic: Topic? = nil) {
+        // Setup OpenAI Service handlers
+        configureOpenAIService()
+        
         // For preview and testing purposes, load example messages
         #if DEBUG
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
@@ -39,17 +43,78 @@ class ConversationViewModel: ObservableObject {
         #endif
     }
     
+    private func configureOpenAIService() {
+        // Configure transcription update handler
+        openAIService.onTranscriptionUpdate = { [weak self] text in
+            DispatchQueue.main.async {
+                self?.transcribedText = text
+            }
+        }
+        
+        // Configure transcription complete handler
+        openAIService.onTranscriptionComplete = { [weak self] finalText in
+            DispatchQueue.main.async {
+                self?.transcribedText = finalText
+                
+                // Send the transcribed text as a message if it's not empty
+                if !finalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    self?.sendMessage(finalText)
+                } else {
+                    self?.transcribedText = ""
+                }
+            }
+        }
+        
+        // Configure error handler
+        openAIService.onTranscriptionError = { [weak self] error in
+            DispatchQueue.main.async {
+                print("Transcription error: \(error.localizedDescription)")
+                self?.transcribedText = "Error: Could not transcribe audio"
+                self?.isRecording = false
+            }
+        }
+    }
+    
     // MARK: - Audio Recording
     
     func startRecording() {
-        let audioSession = AVAudioSession.sharedInstance()
+        // Start realtime transcription using OpenAI API
+        transcribedText = "Listening..."
+        isRecording = true
         
+        // First start local recording
+        startLocalRecording { success in
+            if success {
+                // Then start the OpenAI transcription
+                self.openAIService.startRealtimeTranscription()
+            } else {
+                // If local recording fails, reset state
+                self.isRecording = false
+                self.transcribedText = "Error: Could not start recording"
+            }
+        }
+    }
+    
+    func stopRecording() {
+        // Stop realtime transcription
+        openAIService.stopRealtimeTranscription()
+        
+        // Also stop the local recording
+        stopLocalRecording()
+        
+        isRecording = false
+    }
+    
+    private func startLocalRecording(completion: @escaping (Bool) -> Void) {
+        // We won't configure the audio session here since OpenAIService will do it
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .default)
-            try audioSession.setActive(true)
-            
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let audioFilename = documentsPath.appendingPathComponent("recording.m4a")
+            recordingURL = documentsPath.appendingPathComponent("recording_\(Date().timeIntervalSince1970).m4a")
+            
+            guard let recordingURL = recordingURL else {
+                completion(false)
+                return
+            }
             
             let settings = [
                 AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -58,30 +123,18 @@ class ConversationViewModel: ObservableObject {
                 AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
             ]
             
-            audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
+            // Let the recorder start with existing audio session
+            audioRecorder = try AVAudioRecorder(url: recordingURL, settings: settings)
             audioRecorder?.record()
-            
-            isRecording = true
-            transcribedText = "Listening..."
+            completion(true)
         } catch {
-            print("Failed to start recording: \(error.localizedDescription)")
+            print("Failed to start local recording: \(error.localizedDescription)")
+            completion(false)
         }
     }
     
-    func stopRecording() {
+    private func stopLocalRecording() {
         audioRecorder?.stop()
-        isRecording = false
-        transcribedText = "Processing..."
-        
-        // In a real implementation, this would send the audio to OpenAI for transcription
-        // For now, we'll simulate the process with a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else { return }
-            
-            // Simulate transcription result
-            self.transcribedText = "I'm planning to travel to Japan next month. Can you help me with some useful phrases?"
-            self.sendMessage(self.transcribedText)
-        }
     }
     
     // MARK: - Message Handling
@@ -101,28 +154,48 @@ class ConversationViewModel: ObservableObject {
         transcribedText = ""
         isProcessing = true
         
-        // In a real implementation, this would send the message to OpenAI API
-        // For now, we'll simulate the response with a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
-            guard let self = self else { return }
-            
-            // Simulate AI response with grammar corrections
-            let corrections: [GrammarCorrection] = [
-                GrammarCorrection(original: "I'm planning", corrected: "I'm planning", explanation: "Correct usage of present continuous tense."),
-                GrammarCorrection(original: "next month", corrected: "next month", explanation: "Correct time expression.")
-            ]
-            
-            let aiMessage = Message(
-                id: UUID(),
-                content: "That's great! Japan is a beautiful country with a rich culture. Here are some useful phrases for your trip:\n\n- こんにちは (Konnichiwa) - Hello\n- ありがとう (Arigatou) - Thank you\n- すみません (Sumimasen) - Excuse me/I'm sorry\n- お願いします (Onegaishimasu) - Please\n\nWould you like to practice these phrases or learn more specific ones for situations like ordering food or asking for directions?",
-                sender: .ai,
-                timestamp: Date(),
-                corrections: corrections
-            )
-            
-            self.messages.append(aiMessage)
-            self.isProcessing = false
+        // Convert message history to format expected by OpenAI
+        let chatMessages = formatChatHistory()
+        
+        // Send to OpenAI service
+        openAIService.sendMessage(messages: chatMessages)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure(let error) = completion {
+                    print("Error sending message: \(error.localizedDescription)")
+                    self?.isProcessing = false
+                }
+            }, receiveValue: { [weak self] response in
+                guard let self = self else { return }
+                
+                let aiMessage = Message(
+                    id: UUID(),
+                    content: response.content,
+                    sender: .ai,
+                    timestamp: Date(),
+                    corrections: response.corrections
+                )
+                
+                self.messages.append(aiMessage)
+                self.isProcessing = false
+            })
+            .store(in: &cancellables)
+    }
+    
+    private func formatChatHistory() -> [ChatMessage] {
+        var chatMessages: [ChatMessage] = []
+        
+        // System message to set up the context for the AI
+        chatMessages.append(ChatMessage(role: "system", content: "You are a helpful AI language tutor named SpeakLift. Your purpose is to help users practice English conversation while providing gentle grammar corrections."))
+        
+        // Add the conversation history (limit to last 10 messages to save on tokens)
+        let recentMessages = messages.suffix(10)
+        for message in recentMessages {
+            let role = message.sender == .user ? "user" : "assistant"
+            chatMessages.append(ChatMessage(role: role, content: message.content))
         }
+        
+        return chatMessages
     }
     
     func bookmarkMessage(_ messageId: UUID) {
@@ -131,8 +204,43 @@ class ConversationViewModel: ObservableObject {
     }
     
     func playAudio(for messageId: UUID) {
-        // In a real implementation, this would use text-to-speech to play the message
+        // Find the message
+        guard let message = messages.first(where: { $0.id == messageId }) else { return }
+        
+        // Use the OpenAI text-to-speech API to convert the message content to audio
+        // (This would be implemented in a real app)
         print("Playing audio for message: \(messageId)")
+    }
+    
+    func playRecording() {
+        guard let recordingURL = recordingURL else {
+            print("No recording URL available")
+            return
+        }
+        
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            // Configure audio session for playback
+            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setActive(true)
+            
+            // Create and configure audio player
+            audioPlayer = try AVAudioPlayer(contentsOf: recordingURL)
+            guard let audioPlayer = audioPlayer else {
+                print("Failed to create audio player")
+                return
+            }
+            
+            audioPlayer.prepareToPlay()
+            audioPlayer.volume = 1.0
+            let playSuccess = audioPlayer.play()
+            
+            if !playSuccess {
+                print("Failed to start playback")
+            }
+        } catch {
+            print("Failed to play recording: \(error.localizedDescription)")
+        }
     }
     
     // MARK: - Helper Methods

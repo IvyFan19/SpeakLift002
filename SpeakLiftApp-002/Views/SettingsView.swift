@@ -233,24 +233,129 @@ struct ProficiencyLevelSettingsView: View {
 struct APIKeySettingsView: View {
     @Binding var apiKey: String
     @State private var isEditing = false
+    @State private var tempApiKey = ""
+    @State private var showSavedAlert = false
     
     var body: some View {
         Form {
-            Section(header: Text("OpenAI API Key"), footer: Text("Your API key is stored securely on your device and is used to access the OpenAI services.")) {
+            Section(header: Text("OpenAI API Key"), footer: Text("Your API key is stored securely on your device and is used to access the OpenAI services. Get your API key from https://platform.openai.com/")) {
                 if isEditing {
-                    TextField("Enter API Key", text: $apiKey)
+                    TextField("Enter API Key", text: $tempApiKey)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                        .font(.system(.body, design: .monospaced))
+                        .onAppear {
+                            tempApiKey = apiKey
+                        }
                 } else {
-                    Text(apiKey.isEmpty ? "No API key set" : "API key is set")
+                    if apiKey.isEmpty {
+                        Text("No API key set")
+                            .foregroundColor(.gray)
+                    } else {
+                        VStack(alignment: .leading) {
+                            Text("API key is set")
+                            Text(maskApiKey(apiKey))
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.gray)
+                        }
+                    }
                 }
             }
             
-            Section {
-                Button(isEditing ? "Save" : "Edit") {
-                    isEditing.toggle()
+            Section(footer: Text("要使用实时语音转文字功能，您必须设置有效的 OpenAI API 密钥。这会在您使用应用时产生 API 调用费用。")) {
+                if isEditing {
+                    Button("Save") {
+                        saveApiKey()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    
+                    Button("Cancel") {
+                        isEditing = false
+                        tempApiKey = apiKey
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.red)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(10)
+                } else {
+                    Button("Edit API Key") {
+                        isEditing = true
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.blue)
+                    .cornerRadius(10)
+                    
+                    if !apiKey.isEmpty {
+                        Button("Clear API Key") {
+                            clearApiKey()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .foregroundColor(.red)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(10)
+                    }
                 }
             }
+            
+            Section(header: Text("API 说明")) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("如何获取 OpenAI API 密钥:")
+                        .font(.headline)
+                    
+                    Text("1. 在浏览器中访问 https://platform.openai.com/")
+                    Text("2. 注册或登录您的 OpenAI 账户")
+                    Text("3. 点击右上角的个人资料图标，然后选择「View API keys」")
+                    Text("4. 点击「Create new secret key」按钮")
+                    Text("5. 复制生成的 API 密钥并粘贴到上面的输入框中")
+                    
+                    Text("注意：确保保管好您的 API 密钥，因为它与您的 OpenAI 账户和计费关联。")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.top, 5)
+                }
+                .padding(.vertical, 5)
+            }
+        }
+        .navigationBarTitle("API Key Settings", displayMode: .inline)
+        .alert(isPresented: $showSavedAlert) {
+            Alert(
+                title: Text("API Key Saved"),
+                message: Text("Your OpenAI API key has been saved successfully."),
+                dismissButton: .default(Text("OK"))
+            )
+        }
+    }
+    
+    private func saveApiKey() {
+        // 保存 API 密钥到用户默认设置
+        UserDefaults.standard.set(tempApiKey, forKey: "openai_api_key")
+        apiKey = tempApiKey
+        isEditing = false
+        showSavedAlert = true
+    }
+    
+    private func clearApiKey() {
+        // 清除 API 密钥
+        UserDefaults.standard.removeObject(forKey: "openai_api_key")
+        apiKey = ""
+    }
+    
+    private func maskApiKey(_ key: String) -> String {
+        // 遮盖 API 密钥，只显示前 4 个和最后 4 个字符
+        if key.count > 8 {
+            let prefix = key.prefix(4)
+            let suffix = key.suffix(4)
+            return "\(prefix)••••••••\(suffix)"
+        } else {
+            return "••••••••••••"
         }
     }
 }

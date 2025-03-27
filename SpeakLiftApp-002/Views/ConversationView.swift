@@ -13,7 +13,7 @@ struct ConversationView: View {
     @State private var showCorrectionDetail = false
     @State private var selectedCorrection: GrammarCorrection? = nil
     @State private var expandedCorrectionId: UUID? = nil
-    @State private var elapsedTime: Int = 225 // 3:45 in seconds
+    @State private var elapsedTime: Int = 0 // Start from zero
     @State private var timer: Timer? = nil
     
     init(topic: Topic? = nil) {
@@ -103,7 +103,7 @@ struct ConversationView: View {
                 onBookmark: { viewModel.bookmarkMessage(message.id) },
                 onPlayAudio: { viewModel.playAudio(for: message.id) },
                 onTranslate: { /* Translation functionality */ },
-                onPlayRecording: { /* Play recording functionality */ }
+                onPlayRecording: { viewModel.playRecording() }
             )
             .id(message.id)
             
