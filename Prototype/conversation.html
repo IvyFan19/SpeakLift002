@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakLift - Conversation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #F9F9F9;
+            color: #333333;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .primary-color {
+            color: #4A6FA5;
+        }
+        .secondary-color {
+            color: #47B881;
+        }
+        .accent-color {
+            color: #E94F37;
+        }
+        .primary-bg {
+            background-color: #4A6FA5;
+        }
+        .secondary-bg {
+            background-color: #47B881;
+        }
+        .accent-bg {
+            background-color: #E94F37;
+        }
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 100px; /* Add space at the bottom for the floating buttons */
+        }
+        .message {
+            max-width: 80%;
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        .message-content {
+            margin-bottom: 8px;
+        }
+        .message-actions {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        .ai-message .message-actions {
+            justify-content: flex-start;
+        }
+        .user-message .message-actions {
+            justify-content: flex-end;
+        }
+        .message-action-icon {
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            margin: 0 8px;
+        }
+        .message-action-icon:hover {
+            opacity: 1;
+        }
+        .user-message {
+            background-color: #288cfc;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-message {
+            background-color: #E8E8E8;
+            color: #333;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        .input-container {
+            padding: 12px;
+            background-color: white;
+            border-top: 1px solid #E0E0E0;
+            display: flex;
+            align-items: center;
+        }
+        .circular-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            margin: 0 10px;
+        }
+        .mic-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            background-color: #4A6FA5;
+            margin: 0 20px;
+        }
+        .idea-button {
+            background-color: #47B881;
+        }
+        .cancel-button {
+            background-color: #E94F37;
+        }
+        .mic-button.recording {
+            background-color: #E94F37;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(233, 79, 55, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(233, 79, 55, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(233, 79, 55, 0);
+            }
+        }
+        .text-input {
+            flex: 1;
+            border: 1px solid #E0E0E0;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        .topic-header {
+            padding: 12px 16px;
+            background-color: white;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .timer {
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Topic Header -->
+    <div class="topic-header">
+        <div>
+            <h1 class="text-lg font-semibold">Daily Routines</h1>
+            <p class="text-xs text-gray-500">Beginner Level</p>
+        </div>
+        <div class="timer">
+            <i class="fas fa-clock mr-1"></i>
+            <span>03:45</span>
+        </div>
+    </div>
+    
+    <!-- Chat Container -->
+    <div class="chat-container" id="chatContainer">
+        <!-- AI Welcome Message -->
+        <div class="message ai-message">
+            <div class="message-content">
+                <p>Hi there! I'm your English practice assistant. Let's talk about your daily routine. What time do you usually wake up in the morning?</p>
+            </div>
+            <div class="message-actions">
+                <i class="fas fa-language message-action-icon" title="Translate"></i>
+                <i class="fas fa-volume-up message-action-icon" title="Play/Pause Voice"></i>
+            </div>
+        </div>
+        
+        <!-- User Message -->
+        <div class="message user-message">
+            <div class="message-content">
+                <p>I wake up at 7 o'clock every morning and then I eating breakfast.</p>
+            </div>
+            <div class="message-actions">
+                <i class="fas fa-language message-action-icon" title="Translate"></i>
+                <i class="fas fa-volume-up message-action-icon" title="Play/Pause Voice"></i>
+                <i class="fas fa-play message-action-icon" title="Play/Pause Recording"></i>
+            </div>
+        </div>
+        
+        <!-- AI Response with Correction Indicator -->
+        <div class="message ai-message">
+            <div class="message-content">
+                <p>That's a good time to start the day! I noticed a small grammar mistake in your sentence. You said "I eating breakfast" instead of "I eat breakfast" or "I am eating breakfast." Would you like to try again?</p>
+            </div>
+            <div class="message-actions">
+                <i class="fas fa-language message-action-icon" title="Translate"></i>
+                <i class="fas fa-volume-up message-action-icon" title="Play/Pause Voice"></i>
+            </div>
+        </div>
+        
+        <!-- User Message with Correction -->
+        <div class="message user-message">
+            <div class="message-content">
+                <p>I wake up at 7 o'clock every morning and then I eat breakfast.</p>
+            </div>
+            <div class="message-actions">
+                <i class="fas fa-language message-action-icon" title="Translate"></i>
+                <i class="fas fa-volume-up message-action-icon" title="Play/Pause Voice"></i>
+                <i class="fas fa-play message-action-icon" title="Play/Pause Recording"></i>
+            </div>
+        </div>
+        
+        <!-- AI Response -->
+        <div class="message ai-message">
+            <div class="message-content">
+                <p>Perfect! What do you usually have for breakfast?</p>
+            </div>
+            <div class="message-actions">
+                <i class="fas fa-language message-action-icon" title="Translate"></i>
+                <i class="fas fa-volume-up message-action-icon" title="Play/Pause Voice"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Input Container -->
+    <div class="input-container" style="background-color: transparent !important; justify-content: center; position: fixed; bottom: 20px; left: 0; right: 0; z-index: 100; width: 90%; max-width: 400px; margin: 0 auto; border: none; box-shadow: none;">
+        <div class="circular-button idea-button" id="ideaButton">
+            <i class="fas fa-lightbulb"></i>
+        </div>
+        <div class="circular-button mic-button" id="micButton">
+            <i class="fas fa-microphone"></i>
+        </div>
+        <div class="circular-button cancel-button" id="cancelButton">
+            <i class="fas fa-times"></i>
+        </div>
+    </div>
+    
+    <script>
+        // Microphone button functionality
+        const micButton = document.getElementById('micButton');
+        micButton.addEventListener('click', function() {
+            this.classList.toggle('recording');
+            const icon = this.querySelector('i');
+            if (this.classList.contains('recording')) {
+                icon.className = 'fas fa-stop';
+            } else {
+                icon.className = 'fas fa-microphone';
+            }
+        });
+        
+        // Idea button functionality
+        const ideaButton = document.getElementById('ideaButton');
+        ideaButton.addEventListener('click', function() {
+            // Here you would implement the idea suggestion functionality
+            console.log('Idea button clicked');
+        });
+        
+        // Cancel button functionality
+        const cancelButton = document.getElementById('cancelButton');
+        cancelButton.addEventListener('click', function() {
+            // Here you would implement the cancel recording functionality
+            console.log('Cancel button clicked');
+            if (micButton.classList.contains('recording')) {
+                micButton.classList.remove('recording');
+                micButton.querySelector('i').className = 'fas fa-microphone';
+            }
+        });
+
+        // Add event listeners for message action icons
+        document.querySelectorAll('.fa-volume-up').forEach(icon => {
+            icon.addEventListener('click', function() {
+                // Toggle between volume-up and volume-mute
+                if (this.classList.contains('fa-volume-up')) {
+                    this.classList.remove('fa-volume-up');
+                    this.classList.add('fa-volume-mute');
+                    // Here you would pause the audio
+                } else {
+                    this.classList.remove('fa-volume-mute');
+                    this.classList.add('fa-volume-up');
+                    // Here you would play the audio
+                }
+            });
+        });
+
+        document.querySelectorAll('.fa-play').forEach(icon => {
+            icon.addEventListener('click', function() {
+                // Toggle between play and pause
+                if (this.classList.contains('fa-play')) {
+                    this.classList.remove('fa-play');
+                    this.classList.add('fa-pause');
+                    // Here you would play the recording
+                } else {
+                    this.classList.remove('fa-pause');
+                    this.classList.add('fa-play');
+                    // Here you would pause the recording
+                }
+            });
+        });
+
+        document.querySelectorAll('.fa-language').forEach(icon => {
+            icon.addEventListener('click', function() {
+                // Here you would implement translation functionality
+                alert('Translation feature would be implemented here');
+            });
+        });
+    </script>
+</body>
+</html>
