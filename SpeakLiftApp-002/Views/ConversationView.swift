@@ -334,7 +334,7 @@ struct MessageView: View {
                     HStack(spacing: 10) {
                         if message.sender == .ai {
                             Button(action: onTranslate) {
-                                Image(systemName: "text.bubble")
+                                Image(systemName: "translate")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
