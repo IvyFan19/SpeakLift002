@@ -332,9 +332,10 @@ class OpenAIService {
         return audioData
     }
     
+    private var lastLog = Date()
+    
     private func sendAudioChunk(_ audioData: Data) {
         // 每隔一定时间记录一次发送的数据量
-        static var lastLog = Date()
         let now = Date()
         if now.timeIntervalSince(lastLog) > 5.0 {  // 每5秒记录一次
             print("Sending audio chunk: \(audioData.count) bytes")
