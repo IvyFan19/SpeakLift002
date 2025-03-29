@@ -199,45 +199,56 @@ class ConversationViewModel: ObservableObject {
     }
     
     func bookmarkMessage(_ messageId: UUID) {
-        // In a real implementation, this would save the message to bookmarks
-        print("Bookmarked message: \(messageId)")
+        // Implement bookmarking functionality
+        print("Bookmarking message: \(messageId)")
     }
     
     func playAudio(for messageId: UUID) {
-        // Find the message
-        guard let message = messages.first(where: { $0.id == messageId }) else { return }
-        
-        // Use the OpenAI text-to-speech API to convert the message content to audio
-        // (This would be implemented in a real app)
+        // Implement text-to-speech functionality
         print("Playing audio for message: \(messageId)")
     }
     
-    func playRecording() {
-        guard let recordingURL = recordingURL else {
-            print("No recording URL available")
-            return
-        }
+    func translateMessage(_ messageId: UUID) {
+        // Find the message with the given ID
+        guard let index = messages.firstIndex(where: { $0.id == messageId }),
+              messages[index].sender == .ai else { return }
         
-        let audioSession = AVAudioSession.sharedInstance()
+        // Only translate AI messages
+        let message = messages[index]
+        
+        // If already translated, no need to translate again
+        if message.translation != nil { return }
+        
+        // Show processing indicator
+        isProcessing = true
+        
+        // Call OpenAI service to translate the message
+        openAIService.translateToChineseMessage(message.content)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure(let error) = completion {
+                    print("Error translating message: \(error.localizedDescription)")
+                }
+                self?.isProcessing = false
+            }, receiveValue: { [weak self] translatedText in
+                guard let self = self else { return }
+                
+                // Create a new message with the translation
+                var updatedMessage = message
+                updatedMessage.translation = translatedText
+                
+                // Update the message in the array
+                self.messages[index] = updatedMessage
+            })
+            .store(in: &cancellables)
+    }
+    
+    func playRecording() {
+        guard let recordingURL = recordingURL else { return }
+        
         do {
-            // Configure audio session for playback
-            try audioSession.setCategory(.playback, mode: .default)
-            try audioSession.setActive(true)
-            
-            // Create and configure audio player
             audioPlayer = try AVAudioPlayer(contentsOf: recordingURL)
-            guard let audioPlayer = audioPlayer else {
-                print("Failed to create audio player")
-                return
-            }
-            
-            audioPlayer.prepareToPlay()
-            audioPlayer.volume = 1.0
-            let playSuccess = audioPlayer.play()
-            
-            if !playSuccess {
-                print("Failed to start playback")
-            }
+            audioPlayer?.play()
         } catch {
             print("Failed to play recording: \(error.localizedDescription)")
         }
@@ -291,6 +302,7 @@ struct Message: Identifiable {
     let sender: MessageSender
     let timestamp: Date
     let corrections: [GrammarCorrection]
+    var translation: String? = nil
 }
 
 enum MessageSender {

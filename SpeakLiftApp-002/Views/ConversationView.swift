@@ -102,7 +102,7 @@ struct ConversationView: View {
                 message: message,
                 onBookmark: { viewModel.bookmarkMessage(message.id) },
                 onPlayAudio: { viewModel.playAudio(for: message.id) },
-                onTranslate: { /* Translation functionality */ },
+                onTranslate: { viewModel.translateMessage(message.id) },
                 onPlayRecording: { viewModel.playRecording() }
             )
             .id(message.id)
@@ -322,8 +322,22 @@ struct MessageView: View {
                         Text(message.content)
                             .padding(.horizontal, 12)
                             .padding(.top, 12)
-                            .padding(.bottom, 36) // Space for the buttons
+                            .padding(.bottom, message.translation != nil ? 8 : 36) // Adjust padding based on translation
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Show translation if available
+                        if let translation = message.translation {
+                            Divider()
+                                .padding(.horizontal, 12)
+                            
+                            Text(translation)
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .padding(.bottom, 36) // Space for the buttons
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                     .background(message.sender == .user ? Color.blue : Color(.systemGray5))
                     .foregroundColor(message.sender == .user ? .white : .primary)
@@ -336,7 +350,7 @@ struct MessageView: View {
                             Button(action: onTranslate) {
                                 Image(systemName: "translate")
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(message.translation != nil ? .blue : .gray)
                             }
                             
                             Button(action: onPlayAudio) {

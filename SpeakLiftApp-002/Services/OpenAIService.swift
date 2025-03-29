@@ -476,6 +476,49 @@ class OpenAIService {
             }
             .eraseToAnyPublisher()
     }
+    
+    // MARK: - Translation API
+    
+    func translateToChineseMessage(_ text: String) -> AnyPublisher<String, Error> {
+        guard !apiKey.isEmpty else {
+            return Fail(error: NSError(domain: "OpenAIService", code: 401, userInfo: [NSLocalizedDescriptionKey: "API Key not set"]))
+                .eraseToAnyPublisher()
+        }
+        
+        let url = URL(string: "\(baseURL)/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        // Create a system message instructing the model to translate to Chinese
+        let messages: [[String: String]] = [
+            ["role": "system", "content": "You are a translator. Translate the following English text to Chinese. Only respond with the translated text, nothing else."],
+            ["role": "user", "content": text]
+        ]
+        
+        let requestBody: [String: Any] = [
+            "model": "gpt-3.5-turbo", // Using a smaller model for translation to save costs
+            "messages": messages,
+            "temperature": 0.3 // Lower temperature for more consistent translations
+        ]
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
+            return Fail(error: NSError(domain: "OpenAIService", code: 400, userInfo: [NSLocalizedDescriptionKey: "Failed to encode request"]))
+                .eraseToAnyPublisher()
+        }
+        
+        request.httpBody = jsonData
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .map { $0.data }
+            .decode(type: ChatResponse.self, decoder: JSONDecoder())
+            .map { response in
+                // Extract the translated content
+                return response.choices.first?.message.content ?? ""
+            }
+            .eraseToAnyPublisher()
+    }
 }
 
 // MARK: - Model Structs

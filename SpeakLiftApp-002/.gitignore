@@ -6,3 +6,5 @@ __pycache__/
 
 # Local configuration files
 Config.swift
+Config/DevelopmentConfig.swift
+*.xcuserstate
