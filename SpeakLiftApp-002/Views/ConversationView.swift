@@ -334,9 +334,13 @@ struct MessageView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
+                                .padding(.top, 8)
                                 .padding(.bottom, 36) // Space for the buttons
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true) // Allow text to expand vertically as needed
+                                .lineLimit(nil) // Remove line limit to show all text
+                                .fixedSize(horizontal: false, vertical: true) // Allow text to expand vertically as needed
+                                .lineLimit(nil) // Remove line limit to show all text
                         }
                     }
                     .background(message.sender == .user ? Color.blue : Color(.systemGray5))
