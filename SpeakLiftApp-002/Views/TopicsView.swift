@@ -25,7 +25,7 @@ struct TopicsView: View {
                         .foregroundColor(.gray)
                     
                     TextField("Search topics", text: $viewModel.searchText)
-                        .onChange(of: viewModel.searchText) { _ in
+                        .onChange(of: viewModel.searchText) { oldValue, newValue in
                             viewModel.filterTopics(by: selectedCategory, level: selectedLevel)
                         }
                     

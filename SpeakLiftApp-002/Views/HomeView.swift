@@ -152,7 +152,12 @@ struct HomeView: View {
                         .foregroundColor(.primary)
                 }
             )
-            .background(NavigationLink(destination: ConversationView(), isActive: $navigateToConversation) { EmptyView() })
+            .background(
+                NavigationLink(value: "conversation") { EmptyView() }
+                    .navigationDestination(isPresented: $navigateToConversation) {
+                        ConversationView()
+                    }
+            )
         }
     }
 }

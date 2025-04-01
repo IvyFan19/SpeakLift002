@@ -68,11 +68,11 @@ struct ConversationView: View {
             ScrollView {
                 messagesStack(scrollView: scrollView)
             }
-            .onChange(of: viewModel.messages.count) { _ in
+            .onChange(of: viewModel.messages.count) { oldCount, newCount in
                 scrollToBottom(scrollView: scrollView)
             }
-            .onChange(of: viewModel.isProcessing) { isProcessing in
-                if isProcessing {
+            .onChange(of: viewModel.isProcessing) { oldValue, newValue in
+                if newValue {
                     scrollToProcessingIndicator(scrollView: scrollView)
                 }
             }
