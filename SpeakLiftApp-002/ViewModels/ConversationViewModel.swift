@@ -21,6 +21,7 @@ class ConversationViewModel: ObservableObject {
     private var audioPlayer: AVAudioPlayer?
     private var cancellables = Set<AnyCancellable>()
     private var openAIVTTService = OpenAIVTTService()
+    private var openAISpeakingService = OpenAISpeakingService()
     private var recordingURL: URL?
     
     init(topic: Topic? = nil) {
@@ -132,22 +133,49 @@ class ConversationViewModel: ObservableObject {
         transcribedText = ""
         isProcessing = true
         
-        // For now, just simulate a response with no real AI processing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else { return }
-            
-            // Create a mock response 
-            let aiMessage = Message(
-                id: UUID(),
-                content: "This is a placeholder response since the OpenAI service has been removed. Your message was: \"\(text)\"",
-                sender: .ai,
-                timestamp: Date(),
-                corrections: []
-            )
-            
-            self.messages.append(aiMessage)
-            self.isProcessing = false
-        }
+        // Get chat history to provide context to the AI
+        let chatHistory = formatChatHistory()
+        
+        // Send the message to OpenAI and get a response
+        openAISpeakingService.sendConversationalMessage(
+            userMessage: text,
+            previousMessages: chatHistory.dropLast(), // Drop the last message since we'll add it in the service
+            completion: { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let response):
+                        // Create AI message with the response
+                        let aiMessage = Message(
+                            id: UUID(),
+                            content: response,
+                            sender: .ai,
+                            timestamp: Date(),
+                            corrections: []
+                        )
+                        
+                        self.messages.append(aiMessage)
+                        
+                    case .failure(let error):
+                        print("AI response error: \(error.localizedDescription)")
+                        
+                        // Create fallback message in case of error
+                        let errorMessage = Message(
+                            id: UUID(),
+                            content: "Sorry, I couldn't process your message at this time.",
+                            sender: .ai,
+                            timestamp: Date(),
+                            corrections: []
+                        )
+                        
+                        self.messages.append(errorMessage)
+                    }
+                    
+                    self.isProcessing = false
+                }
+            }
+        )
     }
     
     private func formatChatHistory() -> [ChatMessage] {
@@ -190,17 +218,32 @@ class ConversationViewModel: ObservableObject {
         // Show processing indicator
         isProcessing = true
         
-        // Simulate translation with a delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        // Create translation request message
+        let translationMessages: [ChatMessage] = [
+            ChatMessage(role: "system", content: "You are a helpful AI translator. Translate the following text to Chinese. Only respond with the translation, nothing else."),
+            ChatMessage(role: "user", content: "Please translate this to Chinese: \(message.content)")
+        ]
+        
+        // Send the translation request
+        openAISpeakingService.sendMessage(messages: translationMessages) { [weak self] result in
             guard let self = self else { return }
             
-            // Create a mock translation (Chinese characters that say this is a placeholder)
-            var updatedMessage = message
-            updatedMessage.translation = "这是一个占位符翻译，因为OpenAI服务已被删除。"
-            
-            // Update the message in the array
-            self.messages[index] = updatedMessage
-            self.isProcessing = false
+            DispatchQueue.main.async {
+                var updatedMessage = message
+                
+                switch result {
+                case .success(let translatedText):
+                    updatedMessage.translation = translatedText
+                    
+                case .failure(let error):
+                    print("Translation error: \(error.localizedDescription)")
+                    updatedMessage.translation = "无法翻译文本。请稍后再试。" // Cannot translate text. Please try again later.
+                }
+                
+                // Update the message in the array
+                self.messages[index] = updatedMessage
+                self.isProcessing = false
+            }
         }
     }
     
