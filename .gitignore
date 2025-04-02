@@ -2,3 +2,5 @@
 .specstory/
 *.xcuserstate
 **/xcuserdata/
+*.xccheckout
+*.xcuserdata/

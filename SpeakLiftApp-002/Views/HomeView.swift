@@ -12,7 +12,7 @@ struct HomeView: View {
     @State private var navigateToConversation = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Welcome Section
@@ -152,12 +152,9 @@ struct HomeView: View {
                         .foregroundColor(.primary)
                 }
             )
-            .background(
-                NavigationLink(value: "conversation") { EmptyView() }
-                    .navigationDestination(isPresented: $navigateToConversation) {
-                        ConversationView()
-                    }
-            )
+            .navigationDestination(isPresented: $navigateToConversation) {
+                ConversationView()
+            }
         }
     }
 }

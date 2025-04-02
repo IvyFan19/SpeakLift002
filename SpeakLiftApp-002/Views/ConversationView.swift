@@ -13,8 +13,6 @@ struct ConversationView: View {
     @State private var showCorrectionDetail = false
     @State private var selectedCorrection: GrammarCorrection? = nil
     @State private var expandedCorrectionId: UUID? = nil
-    @State private var elapsedTime: Int = 0 // Start from zero
-    @State private var timer: Timer? = nil
     
     init(topic: Topic? = nil) {
         _viewModel = StateObject(wrappedValue: ConversationViewModel(topic: topic))
@@ -29,12 +27,6 @@ struct ConversationView: View {
                 if let correction = selectedCorrection {
                     CorrectionDetailView(correction: correction)
                 }
-            }
-            .onAppear {
-                startTimer()
-            }
-            .onDisappear {
-                stopTimer()
             }
     }
     
@@ -203,17 +195,6 @@ struct ConversationView: View {
             }
             
             Spacer()
-            
-            HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .font(.caption)
-                Text(timeString(from: elapsedTime))
-                    .font(.caption)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(.systemGray5))
-            .cornerRadius(12)
         }
         .padding()
         .background(Color.white)
@@ -282,23 +263,6 @@ struct ConversationView: View {
             }
         }
         .padding(.bottom, 16)
-    }
-    
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            elapsedTime += 1
-        }
-    }
-    
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-    
-    private func timeString(from seconds: Int) -> String {
-        let minutes = seconds / 60
-        let remainingSeconds = seconds % 60
-        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }
 
@@ -594,7 +558,7 @@ struct RoundedCorner: Shape {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         ConversationView()
     }
 }
