@@ -22,24 +22,28 @@ SpeakLift is an iOS application designed to help users practice conversational E
    git clone https://github.com/IvyFan19/SpeakLift002.git
    ```
 
-2. Open the project in Xcode:
+2. Navigate to the project in Terminal:
    ```
-   cd SpeakLiftApp-002
+   cd "$(pwd)/SpeakLift002/SpeakLiftApp-002"
    ```
 
 3. Configure your OpenAI API key:
-   - Create a `Config` folder in the project: `mkdir Config`
-   - Add a file named `DevelopmentConfig.swift` with the following content:
-   ```swift
-   struct DevelopmentConfig {
-       static let openAIApiKey = "YOUR_ACTUAL_API_KEY_HERE"
-   }
+   - Create a `Config` folder in the project: 
    ```
-   - Replace `YOUR_ACTUAL_API_KEY_HERE` with your OpenAI API key
+   mkdir Config
+   cd Config
+   ```
+   - In terminal， add a file named `DevelopmentConfig.swift` with the following content:
+   
+   ```sh
+   echo 'struct DevelopmentConfig {
+    static let openAIApiKey = "YOUR_ACTUAL_API_KEY_HERE"}' > DevelopmentConfig.swift
+    ```
+   - Only replace `YOUR_ACTUAL_API_KEY_HERE` with your OpenAI API key: https://platform.openai.com/api-keys
 
 ## Running the App
-1. Go back to the project root:
-1. Select your target device or simulator in Xcode
+1. Open project root in Xcdoe: SpeakLift002
+1. Select your target device or simulator in Xcode (e.g. iPhone 16 Pro)
 2. Click the Run button (▶️) or press `Cmd+R`
 3. The app will build and launch on your selected device
 
