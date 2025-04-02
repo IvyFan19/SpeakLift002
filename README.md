@@ -41,6 +41,13 @@ SpeakLift is an iOS application designed to help users practice conversational E
     ```
    - Only replace `YOUR_ACTUAL_API_KEY_HERE` with your OpenAI API key: https://platform.openai.com/api-keys
 
+4. Configure Microphone Access:
+   - In Xcode, open your project's Info.plist file
+   - Add a new entry by clicking the '+' button
+   - Select "Privacy - Microphone Usage Description" (NSMicrophoneUsageDescription)
+   - Set its value to "Access the microphone to practice speaking."
+   - This message will be shown to users when the app requests microphone access
+
 ## Running the App
 1. Open project root in Xcdoe: SpeakLift002
 1. Select your target device or simulator in Xcode (e.g. iPhone 16 Pro)
