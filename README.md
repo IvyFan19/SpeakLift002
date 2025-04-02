@@ -18,18 +18,18 @@ SpeakLift is an iOS application designed to help users practice conversational E
 ## Installation
 
 1. Clone the repository to your local machine:
-   ```
+   ```sh
    git clone https://github.com/IvyFan19/SpeakLift002.git
    ```
 
 2. Navigate to the project in Terminal:
-   ```
+   ```sh
    cd "$(pwd)/SpeakLift002/SpeakLiftApp-002"
    ```
 
 3. Configure your OpenAI API key:
    - Create a `Config` folder in the project: 
-   ```
+   ```sh
    mkdir Config
    cd Config
    ```
@@ -49,19 +49,19 @@ SpeakLift is an iOS application designed to help users practice conversational E
 
 ## Usage Guide
 
-### Home Screen
+### 🏠 Home Screen
 The main dashboard shows your learning progress and suggested practice sessions.
 
-### Topics
+### 📚 Topics
 Browse and select conversation topics organized by difficulty level and category.
 
-### Conversation
+### 💭 Conversation
 Start a conversation by selecting a topic. Speak into your device and receive real-time transcription and corrections.
 
-### Bookmarks
+### 🔖 Bookmarks
 Access saved phrases and corrections for review.
 
-### Settings
+### ⚙️ Settings
 Configure app preferences, manage your profile, and adjust learning parameters.
 
 ## Technical Architecture
