@@ -8,6 +8,8 @@
 import Foundation
 import Combine
 import AVFoundation
+// Import without module prefix since it's in the same target
+// import Models.ChatModels
 
 class ConversationViewModel: ObservableObject {
     @Published var messages: [Message] = []
@@ -18,12 +20,12 @@ class ConversationViewModel: ObservableObject {
     private var audioRecorder: AVAudioRecorder?
     private var audioPlayer: AVAudioPlayer?
     private var cancellables = Set<AnyCancellable>()
-    private var openAIService = OpenAIService()
+    private var openAIVTTService = OpenAIVTTService()
     private var recordingURL: URL?
     
     init(topic: Topic? = nil) {
-        // Setup OpenAI Service handlers
-        configureOpenAIService()
+        // Setup OpenAI VTT Service handlers
+        configureOpenAIVTTService()
         
         // For preview and testing purposes, load example messages
         #if DEBUG
@@ -43,30 +45,47 @@ class ConversationViewModel: ObservableObject {
         #endif
     }
     
-    private func configureOpenAIService() {
-        // Configure transcription update handler
-        openAIService.onTranscriptionUpdate = { [weak self] text in
+    private func configureOpenAIVTTService() {
+        // Configure speech-to-text completion handler
+        openAIVTTService.onTranscriptionComplete = { [weak self] text in
             DispatchQueue.main.async {
-                self?.transcribedText = text
+                guard let self = self else { return }
+                
+                print("Transcription completed: \(text)")
+                self.transcribedText = text
+                
+                // Send the transcribed text as a message if it's not empty
+                if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    self.sendMessage(text)
+                } else {
+                    self.transcribedText = ""
+                }
+                
+                self.isRecording = false
             }
         }
         
-        // Configure transcription complete handler
-        openAIService.onTranscriptionComplete = { [weak self] finalText in
+        // Configure recording started handler
+        openAIVTTService.onRecordingStarted = { [weak self] in
             DispatchQueue.main.async {
-                self?.transcribedText = finalText
-                
-                // Send the transcribed text as a message if it's not empty
-                if !finalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    self?.sendMessage(finalText)
-                } else {
-                    self?.transcribedText = ""
-                }
+                self?.transcribedText = "Listening..."
             }
+        }
+        
+        // Configure recording stopped handler
+        openAIVTTService.onRecordingStopped = { [weak self] in
+            DispatchQueue.main.async {
+                self?.transcribedText = "Processing..."
+            }
+        }
+        
+        // Configure recording progress handler
+        openAIVTTService.onRecordingProgress = { [weak self] level in
+            // This could be used to show a visual indicator of recording level
         }
         
         // Configure error handler
-        openAIService.onTranscriptionError = { [weak self] error in
+        openAIVTTService.onTranscriptionError = { [weak self] error in
             DispatchQueue.main.async {
                 print("Transcription error: \(error.localizedDescription)")
                 self?.transcribedText = "Error: Could not transcribe audio"
@@ -78,63 +97,22 @@ class ConversationViewModel: ObservableObject {
     // MARK: - Audio Recording
     
     func startRecording() {
-        // Start realtime transcription using OpenAI API
-        transcribedText = "Listening..."
         isRecording = true
         
-        // First start local recording
-        startLocalRecording { success in
-            if success {
-                // Then start the OpenAI transcription
-                self.openAIService.startRealtimeTranscription()
-            } else {
-                // If local recording fails, reset state
-                self.isRecording = false
-                self.transcribedText = "Error: Could not start recording"
-            }
+        // Start recording using the OpenAIVTTService
+        if !openAIVTTService.startRecording() {
+            // If recording failed to start, reset state
+            print("Failed to start recording")
+            isRecording = false
+            transcribedText = "Error: Could not start recording"
         }
     }
     
     func stopRecording() {
-        // Stop realtime transcription
-        openAIService.stopRealtimeTranscription()
+        // Stop recording
+        openAIVTTService.stopRecording()
         
-        // Also stop the local recording
-        stopLocalRecording()
-        
-        isRecording = false
-    }
-    
-    private func startLocalRecording(completion: @escaping (Bool) -> Void) {
-        // We won't configure the audio session here since OpenAIService will do it
-        do {
-            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            recordingURL = documentsPath.appendingPathComponent("recording_\(Date().timeIntervalSince1970).m4a")
-            
-            guard let recordingURL = recordingURL else {
-                completion(false)
-                return
-            }
-            
-            let settings = [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 44100,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-            ]
-            
-            // Let the recorder start with existing audio session
-            audioRecorder = try AVAudioRecorder(url: recordingURL, settings: settings)
-            audioRecorder?.record()
-            completion(true)
-        } catch {
-            print("Failed to start local recording: \(error.localizedDescription)")
-            completion(false)
-        }
-    }
-    
-    private func stopLocalRecording() {
-        audioRecorder?.stop()
+        // Note: isRecording will be set to false in the completion handlers
     }
     
     // MARK: - Message Handling
@@ -154,32 +132,22 @@ class ConversationViewModel: ObservableObject {
         transcribedText = ""
         isProcessing = true
         
-        // Convert message history to format expected by OpenAI
-        let chatMessages = formatChatHistory()
-        
-        // Send to OpenAI service
-        openAIService.sendMessage(messages: chatMessages)
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                if case .failure(let error) = completion {
-                    print("Error sending message: \(error.localizedDescription)")
-                    self?.isProcessing = false
-                }
-            }, receiveValue: { [weak self] response in
-                guard let self = self else { return }
-                
-                let aiMessage = Message(
-                    id: UUID(),
-                    content: response.content,
-                    sender: .ai,
-                    timestamp: Date(),
-                    corrections: response.corrections
-                )
-                
-                self.messages.append(aiMessage)
-                self.isProcessing = false
-            })
-            .store(in: &cancellables)
+        // For now, just simulate a response with no real AI processing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            
+            // Create a mock response 
+            let aiMessage = Message(
+                id: UUID(),
+                content: "This is a placeholder response since the OpenAI service has been removed. Your message was: \"\(text)\"",
+                sender: .ai,
+                timestamp: Date(),
+                corrections: []
+            )
+            
+            self.messages.append(aiMessage)
+            self.isProcessing = false
+        }
     }
     
     private func formatChatHistory() -> [ChatMessage] {
@@ -222,36 +190,24 @@ class ConversationViewModel: ObservableObject {
         // Show processing indicator
         isProcessing = true
         
-        // Call OpenAI service to translate the message
-        openAIService.translateToChineseMessage(message.content)
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                if case .failure(let error) = completion {
-                    print("Error translating message: \(error.localizedDescription)")
-                }
-                self?.isProcessing = false
-            }, receiveValue: { [weak self] translatedText in
-                guard let self = self else { return }
-                
-                // Create a new message with the translation
-                var updatedMessage = message
-                updatedMessage.translation = translatedText
-                
-                // Update the message in the array
-                self.messages[index] = updatedMessage
-            })
-            .store(in: &cancellables)
+        // Simulate translation with a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            
+            // Create a mock translation (Chinese characters that say this is a placeholder)
+            var updatedMessage = message
+            updatedMessage.translation = "这是一个占位符翻译，因为OpenAI服务已被删除。"
+            
+            // Update the message in the array
+            self.messages[index] = updatedMessage
+            self.isProcessing = false
+        }
     }
     
     func playRecording() {
-        guard let recordingURL = recordingURL else { return }
-        
-        do {
-            audioPlayer = try AVAudioPlayer(contentsOf: recordingURL)
-            audioPlayer?.play()
-        } catch {
-            print("Failed to play recording: \(error.localizedDescription)")
-        }
+        // This method remains for compatibility with the UI,
+        // but would need implementation if you want to play back recordings
+        print("Play recording requested (not implemented)")
     }
     
     // MARK: - Helper Methods
