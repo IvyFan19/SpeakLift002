@@ -13,6 +13,7 @@ struct ConversationView: View {
     @State private var showCorrectionDetail = false
     @State private var selectedCorrection: GrammarCorrection? = nil
     @State private var expandedCorrectionId: UUID? = nil
+    @State private var lastUpdateTime = Date()
     
     init(topic: Topic? = nil) {
         _viewModel = StateObject(wrappedValue: ConversationViewModel(topic: topic))
@@ -27,6 +28,19 @@ struct ConversationView: View {
                 if let correction = selectedCorrection {
                     CorrectionDetailView(correction: correction)
                 }
+            }
+            .onReceive(viewModel.objectWillChange) { _ in
+                let now = Date()
+                print("[TranslationLog] View received objectWillChange notification at \(now)")
+                
+                // Check if any message has a translation
+                for (index, message) in viewModel.messages.enumerated() {
+                    if message.translation != nil {
+                        print("[TranslationLog] View detected message at index \(index) with ID \(message.id) has translation")
+                    }
+                }
+                
+                lastUpdateTime = now
             }
     }
     
@@ -221,12 +235,15 @@ struct ConversationView: View {
                         .foregroundColor(.white)
                 }
             }
+            .disabled(viewModel.isRecording) // Disable during recording
             
             Button(action: {
                 if viewModel.isRecording {
                     viewModel.stopRecording()
                 } else {
-                    viewModel.startRecording()
+                    withAnimation {
+                        viewModel.startRecording()
+                    }
                 }
             }) {
                 ZStack {
@@ -261,6 +278,9 @@ struct ConversationView: View {
                         .foregroundColor(.white)
                 }
             }
+            .opacity(viewModel.isRecording ? 1.0 : 0.0)
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isRecording)
+            .disabled(!viewModel.isRecording) // Only enable during recording
         }
         .padding(.bottom, 16)
     }

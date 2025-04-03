@@ -98,22 +98,32 @@ class ConversationViewModel: ObservableObject {
     // MARK: - Audio Recording
     
     func startRecording() {
-        isRecording = true
+        // Only set isRecording to true after successful start
+        let success = openAIVTTService.startRecording()
         
-        // Start recording using the OpenAIVTTService
-        if !openAIVTTService.startRecording() {
-            // If recording failed to start, reset state
+        if !success {
+            // If recording failed to start, show error message
             print("Failed to start recording")
-            isRecording = false
             transcribedText = "Error: Could not start recording"
+        } else {
+            isRecording = true
         }
     }
     
     func stopRecording() {
-        // Stop recording
-        openAIVTTService.stopRecording()
-        
-        // Note: isRecording will be set to false in the completion handlers
+        // Only stop if we're actually recording
+        if isRecording {
+            openAIVTTService.stopRecording()
+            
+            // Note: isRecording will be set to false in the completion handlers
+            // But set a timeout just in case
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                if self?.isRecording == true {
+                    self?.isRecording = false
+                    self?.transcribedText = "Recording timed out"
+                }
+            }
+        }
     }
     
     // MARK: - Message Handling

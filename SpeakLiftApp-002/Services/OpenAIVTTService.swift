@@ -146,7 +146,8 @@ class OpenAIVTTService {
         print("[OpenAIVTTService] Recording to: \(recordingURL.path)")
         
         do {
-            // Ensure the audio session is properly configured before recording
+            // Deactivate and reactivate the audio session to prevent conflicts
+            try recordingSession?.setActive(false)
             try recordingSession?.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try recordingSession?.setActive(true, options: .notifyOthersOnDeactivation)
             
@@ -226,6 +227,13 @@ class OpenAIVTTService {
         // Stop recording
         recorder.stop()
         isRecording = false
+        
+        // Reset audio session
+        do {
+            try recordingSession?.setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("[OpenAIVTTService] Error deactivating audio session: \(error.localizedDescription)")
+        }
         
         // Notify that recording has stopped
         DispatchQueue.main.async {
