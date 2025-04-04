@@ -97,7 +97,13 @@ class OpenAIVTTService {
     func startRecording() -> Bool {
         print("[OpenAIVTTService] Starting recording...")
         
-        // Check if we're already recording
+        // Force reset any existing recording state to ensure clean state
+        if audioRecorder != nil || isRecording {
+            print("[OpenAIVTTService] Forcing reset of previous recording state")
+            resetRecordingState()
+        }
+        
+        // Double-check that we're not still recording after reset
         guard !isRecording else {
             print("[OpenAIVTTService] Already recording")
             return false
@@ -146,8 +152,13 @@ class OpenAIVTTService {
         print("[OpenAIVTTService] Recording to: \(recordingURL.path)")
         
         do {
-            // Deactivate and reactivate the audio session to prevent conflicts
-            try recordingSession?.setActive(false)
+            // Completely reset the audio session to avoid conflicts
+            try recordingSession?.setActive(false, options: .notifyOthersOnDeactivation)
+            
+            // Wait a short moment to ensure audio session is fully released
+            Thread.sleep(forTimeInterval: 0.1)
+            
+            // Configure and activate the audio session
             try recordingSession?.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try recordingSession?.setActive(true, options: .notifyOthersOnDeactivation)
             
@@ -166,6 +177,9 @@ class OpenAIVTTService {
             audioRecorder?.delegate = nil
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.prepareToRecord()
+            
+            // Use a small delay to ensure audio system is fully ready
+            Thread.sleep(forTimeInterval: 0.05)
             
             if audioRecorder?.record() == true {
                 isRecording = true
@@ -216,6 +230,8 @@ class OpenAIVTTService {
     func stopRecording() {
         guard isRecording, let recorder = audioRecorder else {
             print("[OpenAIVTTService] No active recording to stop")
+            // Reset state even if we weren't recording to be sure
+            resetRecordingState()
             return
         }
         
@@ -245,7 +261,40 @@ class OpenAIVTTService {
             transcribeAudio(url: url)
         } else {
             print("[OpenAIVTTService] No recording URL available")
+            resetRecordingState()
         }
+    }
+    
+    /// Fully resets the recording state
+    private func resetRecordingState() {
+        // Stop any ongoing recording
+        audioRecorder?.stop()
+        
+        // Reset all recording-related properties
+        isRecording = false
+        audioRecorder = nil
+        recordingStartTime = nil
+        
+        // Try to reset audio session with more thorough approach
+        do {
+            // First deactivate
+            try recordingSession?.setActive(false, options: .notifyOthersOnDeactivation)
+            
+            // Small delay to ensure system has time to process
+            Thread.sleep(forTimeInterval: 0.1)
+            
+            // Then reset category and reactivate briefly
+            try recordingSession?.setCategory(.playAndRecord, mode: .default)
+            try recordingSession?.setActive(true)
+            
+            // Then deactivate again to fully release
+            Thread.sleep(forTimeInterval: 0.05)
+            try recordingSession?.setActive(false)
+        } catch {
+            print("[OpenAIVTTService] Error resetting audio session during reset: \(error.localizedDescription)")
+        }
+        
+        print("[OpenAIVTTService] Recording state has been fully reset")
     }
     
     // MARK: - Transcription Methods
@@ -261,12 +310,21 @@ class OpenAIVTTService {
                 self.onTranscriptionError?(error)
             }
             
+            // Reset recording state
+            self.isRecording = false
+            self.audioRecorder = nil
+            
             return
         }
         
         // Create URL request
         guard let url = URL(string: baseURL) else {
             print("[OpenAIVTTService] Invalid API URL")
+            
+            // Reset recording state
+            self.isRecording = false
+            self.audioRecorder = nil
+            
             return
         }
         
@@ -371,6 +429,10 @@ class OpenAIVTTService {
                 
                 DispatchQueue.main.async {
                     self?.onTranscriptionComplete?(transcribedText)
+                    
+                    // Reset recording state
+                    self?.isRecording = false
+                    self?.audioRecorder = nil
                 }
             } catch {
                 print("[OpenAIVTTService] JSON parsing error: \(error.localizedDescription)")
@@ -381,6 +443,10 @@ class OpenAIVTTService {
                 
                 DispatchQueue.main.async {
                     self?.onTranscriptionError?(error)
+                    
+                    // Reset recording state
+                    self?.isRecording = false
+                    self?.audioRecorder = nil
                 }
             }
         }

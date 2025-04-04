@@ -98,6 +98,20 @@ class ConversationViewModel: ObservableObject {
     // MARK: - Audio Recording
     
     func startRecording() {
+        // Check if we're already processing a previous recording or waiting for AI response
+        guard !isProcessing else {
+            print("Cannot start recording while processing a previous recording or waiting for AI response")
+            transcribedText = "Please wait for processing to complete"
+            
+            // Set a timeout to clear the error message after a short while
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                if self?.transcribedText == "Please wait for processing to complete" {
+                    self?.transcribedText = ""
+                }
+            }
+            return
+        }
+        
         // Only set isRecording to true after successful start
         let success = openAIVTTService.startRecording()
         
@@ -105,6 +119,13 @@ class ConversationViewModel: ObservableObject {
             // If recording failed to start, show error message
             print("Failed to start recording")
             transcribedText = "Error: Could not start recording"
+            
+            // Set a timeout to clear the error message after a short while
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                if self?.transcribedText == "Error: Could not start recording" {
+                    self?.transcribedText = ""
+                }
+            }
         } else {
             isRecording = true
         }
@@ -121,6 +142,13 @@ class ConversationViewModel: ObservableObject {
                 if self?.isRecording == true {
                     self?.isRecording = false
                     self?.transcribedText = "Recording timed out"
+                    
+                    // Clear the timeout message after a short while
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                        if self?.transcribedText == "Recording timed out" {
+                            self?.transcribedText = ""
+                        }
+                    }
                 }
             }
         }
@@ -130,6 +158,9 @@ class ConversationViewModel: ObservableObject {
     
     func sendMessage(_ text: String) {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
+        // Set processing flag to prevent new recordings during message processing
+        isProcessing = true
         
         let userMessage = Message(
             id: UUID(),
@@ -141,10 +172,11 @@ class ConversationViewModel: ObservableObject {
         
         messages.append(userMessage)
         transcribedText = ""
-        isProcessing = true
         
         // Get chat history to provide context to the AI
         let chatHistory = formatChatHistory()
+        
+        print("Starting AI processing")
         
         // Send the message to OpenAI and get a response
         openAISpeakingService.sendConversationalMessage(
@@ -182,6 +214,8 @@ class ConversationViewModel: ObservableObject {
                         self.messages.append(errorMessage)
                     }
                     
+                    // Clear the processing flag only after everything is complete
+                    print("AI processing complete, ready for new recording")
                     self.isProcessing = false
                 }
             }
