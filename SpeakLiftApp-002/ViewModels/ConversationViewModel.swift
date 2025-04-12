@@ -93,6 +93,14 @@ class ConversationViewModel: ObservableObject {
                 self?.isRecording = false
             }
         }
+        
+        // Configure recording URL handler
+        openAIVTTService.onRecordingURLSet = { [weak self] url in
+            DispatchQueue.main.async {
+                print("Recording URL set: \(url.path)")
+                self?.recordingURL = url
+            }
+        }
     }
     
     // MARK: - Audio Recording
@@ -292,9 +300,27 @@ class ConversationViewModel: ObservableObject {
     }
     
     func playRecording() {
-        // This method remains for compatibility with the UI,
-        // but would need implementation if you want to play back recordings
-        print("Play recording requested (not implemented)")
+        // Check if we have a recording URL
+        guard let recordingURL = recordingURL else {
+            print("No recording URL available")
+            return
+        }
+        
+        do {
+            // Create a new audio player with the recording URL
+            audioPlayer = try AVAudioPlayer(contentsOf: recordingURL)
+            audioPlayer?.delegate = nil // We don't need a delegate for simple playback
+            audioPlayer?.prepareToPlay()
+            
+            // Start playback
+            if audioPlayer?.play() == true {
+                print("Started playing recording")
+            } else {
+                print("Failed to start playing recording")
+            }
+        } catch {
+            print("Error playing recording: \(error.localizedDescription)")
+        }
     }
     
     // MARK: - Helper Methods

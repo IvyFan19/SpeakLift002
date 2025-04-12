@@ -32,6 +32,7 @@ class OpenAIVTTService {
     var onRecordingProgress: ((Float) -> Void)?
     var onRecordingStarted: (() -> Void)?
     var onRecordingStopped: (() -> Void)?
+    var onRecordingURLSet: ((URL) -> Void)?
     
     // State
     private var isRecording = false
@@ -150,6 +151,11 @@ class OpenAIVTTService {
         }
         
         print("[OpenAIVTTService] Recording to: \(recordingURL.path)")
+        
+        // Notify that recording URL has been set
+        DispatchQueue.main.async {
+            self.onRecordingURLSet?(recordingURL)
+        }
         
         do {
             // Completely reset the audio session to avoid conflicts
@@ -430,7 +436,7 @@ class OpenAIVTTService {
                 DispatchQueue.main.async {
                     self?.onTranscriptionComplete?(transcribedText)
                     
-                    // Reset recording state
+                    // Reset recording state but keep the URL for playback
                     self?.isRecording = false
                     self?.audioRecorder = nil
                 }
@@ -444,7 +450,7 @@ class OpenAIVTTService {
                 DispatchQueue.main.async {
                     self?.onTranscriptionError?(error)
                     
-                    // Reset recording state
+                    // Reset recording state but keep the URL for playback
                     self?.isRecording = false
                     self?.audioRecorder = nil
                 }
