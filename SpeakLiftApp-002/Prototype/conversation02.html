@@ -89,7 +89,7 @@
         /* Speak Checker styles */
         .speak-checker {
             background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 0 0 12px 12px;
+            border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin-left: auto;
             margin-right: 0px;
@@ -98,149 +98,87 @@
             max-width: 90%;
             overflow: hidden;
         }
-        .speak-checker-header {
+        .speak-checker-tabs {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            cursor: pointer;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .speak-checker-left {
-            display: flex;
-            align-items: center;
+        .speak-checker-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
         }
-        .speak-checker-toggle {
-            color: #666;
-            font-size: 12px;
-            transition: transform 0.3s ease;
+        .speak-checker-tab[data-tab="grammar"] {
+            color: #6B8FC7;
         }
-        .speak-checker-toggle.open {
-            transform: rotate(180deg);
+        .speak-checker-tab[data-tab="vocabulary"] {
+            color: #6BC7A1;
         }
-        .speak-checker-score-circle {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .speak-checker-tab[data-tab="pronunciation"] {
+            color: #FF7B6B;
+        }
+        .speak-checker-tab[data-tab="fluency"] {
+            color: #FFC966;
+        }
+        .speak-checker-tab:hover {
+            opacity: 0.8;
+        }
+        .speak-checker-tab.active {
+            font-weight: 600;
+            opacity: 1;
+            border-bottom: 2px solid currentColor;
+        }
+        .speak-checker-tab::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 8px;
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
-            font-size: 13px;
-            font-weight: bold;
-            animation: scoreAppear 0.5s ease forwards;
-            margin-right: 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
         }
-        .score-high {
-            background-color: #47B881;
-        }
-        .score-medium {
-            background-color: #FFB020;
-        }
-        .score-low {
-            background-color: #E94F37;
-        }
-        .speak-checker-label {
-            font-size: 13px;
-            color: #666;
-            text-transform: none;
-            letter-spacing: 0.5px;
+        .speak-checker-tab:hover::after {
+            opacity: 1;
+            visibility: visible;
         }
         .speak-checker-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+            display: none;
+            padding: 12px;
         }
-        .speak-checker-content.open {
-            max-height: 180px; /* Reduced height for smaller content */
-            overflow-y: auto;
-            scrollbar-width: thin;
-        }
-        /* Custom scrollbar for Webkit browsers */
-        .speak-checker-content.open::-webkit-scrollbar {
-            width: 6px;
-        }
-        .speak-checker-content.open::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .speak-checker-content.open::-webkit-scrollbar-thumb {
-            background: #aaa;
-            border-radius: 10px;
-        }
-        .speak-checker-content.open::-webkit-scrollbar-thumb:hover {
-            background: #888;
+        .speak-checker-content.active {
+            display: block;
         }
         .feedback-item {
-            padding: 8px 12px;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-        .feedback-type {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            font-weight: 700;
-            border-left: 3px solid #4A6FA5;
-            padding-left: 8px;
-            letter-spacing: 0.5px;
-        }
-        .feedback-detail {
-            font-size: 12px;
-            color: #333;
-            padding: 0 4px;
-        }
-        .visual-comparison {
-            display: none;
-        }
-        .error-item, .correct-item {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-        }
-        .error-icon {
-            color: #E94F37;
-            margin-right: 8px;
-            font-size: 14px;
-            min-width: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .correct-icon {
-            color: #47B881;
-            margin-right: 8px;
-            font-size: 14px;
-            min-width: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .feedback-item:last-child {
+            border-bottom: none;
         }
         .error-text {
             color: #E94F37;
             text-decoration: line-through;
-            font-weight: 500;
-            font-size: 13px;
+            margin-right: 8px;
         }
         .correct-text {
             color: #47B881;
             font-weight: 500;
-            text-decoration: underline;
-            font-size: 13px;
         }
         .explanation-text {
             color: #666;
             font-size: 12px;
-            margin-top: 12px;
-            margin-bottom: 6px;
-            padding-left: 0;
+            margin-top: 8px;
             line-height: 1.4;
-        }
-        /* Animation for score circle */
-        @keyframes scoreAppear {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
         }
         .input-container {
             padding: 12px;
@@ -357,54 +295,50 @@
         
         <!-- Speak Checker Component -->
         <div class="speak-checker">
-            <div class="speak-checker-header" id="speakCheckerHeader">
-                <div class="speak-checker-left">
-                    <div class="speak-checker-score-circle score-high">95</div>
-                    <div class="speak-checker-label">Speak Checker</div>
+            <div class="speak-checker-tabs">
+                <div class="speak-checker-tab active" data-tab="grammar" data-tooltip="Grammar">
+                    <i class="fas fa-pen"></i>
                 </div>
-                <i class="fas fa-chevron-down speak-checker-toggle" id="speakCheckerToggle"></i>
+                <div class="speak-checker-tab" data-tab="vocabulary" data-tooltip="Vocabulary">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="speak-checker-tab" data-tab="pronunciation" data-tooltip="Pronunciation">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <div class="speak-checker-tab" data-tab="fluency" data-tooltip="Fluency">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
             </div>
-            <div class="speak-checker-content" id="speakCheckerContent">
+            <div class="speak-checker-content active" data-content="grammar">
                 <div class="feedback-item">
-                    <div class="feedback-type">Grammar</div>
-                    <div class="feedback-detail">
-                        <div class="error-item">
-                            <div class="error-icon"><i class="fas fa-times"></i></div>
-                            <span class="error-text">sometime I eating</span>
-                        </div>
-                        <div class="correct-item">
-                            <div class="correct-icon"><i class="fas fa-check"></i></div>
-                            <span class="correct-text">sometimes I eat</span>
-                        </div>
-                        <div class="explanation-text">
-                            Use the correct tense with present simple for routine activities. Watch for article usage with breakfast (no "the").
-                        </div>
+                    <span class="error-text">I eating breakfast</span>
+                    <span class="correct-text">I eat breakfast</span>
+                    <div class="explanation-text">
+                        Use the correct tense with present simple for routine activities.
                     </div>
                 </div>
+            </div>
+            <div class="speak-checker-content" data-content="vocabulary">
                 <div class="feedback-item">
-                    <div class="feedback-type">Vocabulary</div>
-                    <div class="feedback-detail">
-                        <div class="error-item">
-                            <div class="error-icon"><i class="fas fa-times"></i></div>
-                            <span class="error-text">sometime</span>
-                        </div>
-                        <div class="correct-item">
-                            <div class="correct-icon"><i class="fas fa-check"></i></div>
-                            <span class="correct-text">sometimes</span>
-                        </div>
-                        <div class="explanation-text">
-                            "Sometime" means at an unspecified point in time. "Sometimes" means occasionally or now and then.
-                            Also note that "make breakfast" is a false friend in some languages - in English we say "have breakfast" or "eat breakfast".
-                        </div>
+                    <span class="error-text">sometime</span>
+                    <span class="correct-text">sometimes</span>
+                    <div class="explanation-text">
+                        "Sometime" means at an unspecified point in time. "Sometimes" means occasionally or now and then.
                     </div>
                 </div>
+            </div>
+            <div class="speak-checker-content" data-content="pronunciation">
                 <div class="feedback-item">
-                    <div class="feedback-type">Pronunciation</div>
-                    <div class="feedback-detail">Great pronunciation of "breakfast" and "morning". Pay attention to the 'th' sound in "then".</div>
+                    <div class="explanation-text">
+                        Great pronunciation of "breakfast" and "morning". Pay attention to the 'th' sound in "then".
+                    </div>
                 </div>
+            </div>
+            <div class="speak-checker-content" data-content="fluency">
                 <div class="feedback-item">
-                    <div class="feedback-type">Fluency</div>
-                    <div class="feedback-detail">Your sentence flows naturally. To sound more native-like, try: "I usually wake up at 7 o'clock and have breakfast right after."</div>
+                    <div class="explanation-text">
+                        Your sentence flows naturally. To sound more native-like, try: "I usually wake up at 7 o'clock and have breakfast right after."
+                    </div>
                 </div>
             </div>
         </div>
@@ -433,56 +367,48 @@
         
         <!-- Speak Checker Component for Message with Errors -->
         <div class="speak-checker">
-            <div class="speak-checker-header" id="speakCheckerHeader2">
-                <div class="speak-checker-left">
-                    <div class="speak-checker-score-circle score-medium">78</div>
-                    <div class="speak-checker-label">Speak Checker</div>
+            <div class="speak-checker-tabs">
+                <div class="speak-checker-tab active" data-tab="grammar" data-tooltip="Grammar">
+                    <i class="fas fa-pen"></i>
                 </div>
-                <i class="fas fa-chevron-down speak-checker-toggle" id="speakCheckerToggle2"></i>
+                <div class="speak-checker-tab" data-tab="vocabulary" data-tooltip="Vocabulary">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="speak-checker-tab" data-tab="pronunciation" data-tooltip="Pronunciation">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <div class="speak-checker-tab" data-tooltip="Fluency" data-tab="fluency">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
             </div>
-            <div class="speak-checker-content" id="speakCheckerContent2">
+            <div class="speak-checker-content active" data-content="grammar">
                 <div class="feedback-item">
-                    <div class="feedback-type">Grammar</div>
-                    <div class="feedback-detail">
-                        <div class="error-item">
-                            <div class="error-icon"><i class="fas fa-times"></i></div>
-                            <span class="error-text">sometime I eating</span>
-                        </div>
-                        <div class="correct-item">
-                            <div class="correct-icon"><i class="fas fa-check"></i></div>
-                            <span class="correct-text">sometimes I eat</span>
-                        </div>
-                        <div class="explanation-text">
-                            Use the correct tense with present simple for routine activities. Watch for article usage with breakfast (no "the").
-                        </div>
+                    <span class="error-text">I eating breakfast</span>
+                    <span class="correct-text">I eat breakfast</span>
+                    <div class="explanation-text">
+                        Use the correct tense with present simple for routine activities.
                     </div>
                 </div>
+            </div>
+            <div class="speak-checker-content" data-content="vocabulary">
                 <div class="feedback-item">
-                    <div class="feedback-type">Vocabulary</div>
-                    <div class="feedback-detail">
-                        <div class="error-item">
-                            <div class="error-icon"><i class="fas fa-times"></i></div>
-                            <span class="error-text">sometime</span>
-                        </div>
-                        <div class="correct-item">
-                            <div class="correct-icon"><i class="fas fa-check"></i></div>
-                            <span class="correct-text">sometimes</span>
-                        </div>
-                        <div class="explanation-text">
-                            "Sometime" means at an unspecified point in time. "Sometimes" means occasionally or now and then.
-                            Also note that "make breakfast" is a false friend in some languages - in English we say "have breakfast" or "eat breakfast".
-                        </div>
+                    <span class="error-text">sometime</span>
+                    <span class="correct-text">sometimes</span>
+                    <div class="explanation-text">
+                        "Sometime" means at an unspecified point in time. "Sometimes" means occasionally or now and then.
                     </div>
                 </div>
+            </div>
+            <div class="speak-checker-content" data-content="pronunciation">
                 <div class="feedback-item">
-                    <div class="feedback-type">Pronunciation</div>
-                    <div class="feedback-detail">
-                        Pay attention to the 'th' sound in "then" and the stress in "o'clock". The word "breakfast" should emphasize the first syllable: BREAK-fast.
+                    <div class="explanation-text">
+                        Pay attention to the 'th' sound in "then" and the stress in "o'clock".
                     </div>
                 </div>
+            </div>
+            <div class="speak-checker-content" data-content="fluency">
                 <div class="feedback-item">
-                    <div class="feedback-type">Fluency</div>
-                    <div class="feedback-detail">
+                    <div class="explanation-text">
                         Good pace and natural flow. To sound more native-like, try: "I get up at 7 every morning and then grab some breakfast before starting my day."
                     </div>
                 </div>
@@ -561,19 +487,24 @@
             });
         });
 
-        // Speak Checker dropdown functionality
-        document.getElementById('speakCheckerHeader').addEventListener('click', function() {
-            const content = document.getElementById('speakCheckerContent');
-            const toggle = document.getElementById('speakCheckerToggle');
-            content.classList.toggle('open');
-            toggle.classList.toggle('open');
-        });
-        
-        document.getElementById('speakCheckerHeader2').addEventListener('click', function() {
-            const content = document.getElementById('speakCheckerContent2');
-            const toggle = document.getElementById('speakCheckerToggle2');
-            content.classList.toggle('open');
-            toggle.classList.toggle('open');
+        // Tab functionality for Speak Checker
+        document.querySelectorAll('.speak-checker-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const speakChecker = this.closest('.speak-checker');
+                const tabName = this.getAttribute('data-tab');
+                
+                // Update active tab
+                speakChecker.querySelectorAll('.speak-checker-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Show corresponding content
+                speakChecker.querySelectorAll('.speak-checker-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                speakChecker.querySelector(`.speak-checker-content[data-content="${tabName}"]`).classList.add('active');
+            });
         });
 
         document.querySelectorAll('.fa-play').forEach(icon => {
