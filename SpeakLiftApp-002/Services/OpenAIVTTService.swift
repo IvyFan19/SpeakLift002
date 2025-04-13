@@ -24,7 +24,7 @@ class OpenAIVTTService {
     
     private var audioRecorder: AVAudioRecorder?
     private var recordingSession: AVAudioSession?
-    private var recordingURL: URL?
+    private(set) var recordingURL: URL?
     
     // Callbacks
     var onTranscriptionComplete: ((String) -> Void)?

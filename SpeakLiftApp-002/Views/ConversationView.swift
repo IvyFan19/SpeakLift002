@@ -294,84 +294,127 @@ struct MessageView: View {
     let onPlayRecording: () -> Void
     
     var body: some View {
-        HStack {
-            if message.sender == .user {
-                Spacer()
-            }
-            
-            VStack(alignment: message.sender == .user ? .trailing : .leading, spacing: 8) {
-                ZStack(alignment: .bottom) {
-                    // Message content
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(message.content)
-                            .padding(.horizontal, 12)
-                            .padding(.top, 12)
-                            .padding(.bottom, message.translation != nil ? 8 : 36) // Adjust padding based on translation
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // Show translation if available
-                        if let translation = message.translation {
-                            Divider()
+        VStack(spacing: 0) {
+            HStack {
+                if message.sender == .user {
+                    Spacer()
+                }
+                
+                VStack(alignment: message.sender == .user ? .trailing : .leading, spacing: 8) {
+                    ZStack(alignment: .bottom) {
+                        // Message content
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(message.content)
                                 .padding(.horizontal, 12)
-                            
-                            Text(translation)
-                                .font(.system(size: 14))
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 12)
-                                .padding(.top, 8)
-                                .padding(.bottom, 36) // Space for the buttons
+                                .padding(.top, 12)
+                                .padding(.bottom, message.translation != nil ? 8 : 36) // Adjust padding based on translation
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .fixedSize(horizontal: false, vertical: true) // Allow text to expand vertically as needed
-                                .lineLimit(nil) // Remove line limit to show all text
-                                .fixedSize(horizontal: false, vertical: true) // Allow text to expand vertically as needed
-                                .lineLimit(nil) // Remove line limit to show all text
-                        }
-                    }
-                    .background(message.sender == .user ? Color.blue : Color(.systemGray5))
-                    .foregroundColor(message.sender == .user ? .white : .primary)
-                    .cornerRadius(18)
-                    .cornerRadius(message.sender == .user ? 4 : 18, corners: message.sender == .user ? .bottomRight : .bottomLeft)
-                    
-                    // Controls overlay at bottom of bubble
-                    HStack(spacing: 10) {
-                        if message.sender == .ai {
-                            Button(action: onTranslate) {
-                                Image(systemName: "translate")
-                                    .font(.caption)
-                                    .foregroundColor(message.translation != nil ? .blue : .gray)
-                            }
                             
-                            Button(action: onPlayAudio) {
-                                Image(systemName: "speaker.wave.2")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            Spacer()
-                        } else {
-                            Spacer()
-                            
-                            Button(action: onPlayAudio) {
-                                Image(systemName: "speaker.wave.2")
-                                    .font(.caption)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Button(action: onPlayRecording) {
-                                Image(systemName: "play")
-                                    .font(.caption)
-                                    .foregroundColor(.white)
+                            // Show translation if available
+                            if let translation = message.translation {
+                                Divider()
+                                    .padding(.horizontal, 12)
+                                
+                                Text(translation)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 12)
+                                    .padding(.top, 8)
+                                    .padding(.bottom, 36) // Space for the buttons
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .fixedSize(horizontal: false, vertical: true) // Allow text to expand vertically as needed
+                                    .lineLimit(nil) // Remove line limit to show all text
+                                    .fixedSize(horizontal: false, vertical: true) // Allow text to expand vertically as needed
+                                    .lineLimit(nil) // Remove line limit to show all text
                             }
                         }
+                        .background(message.sender == .user ? Color.blue : Color(.systemGray5))
+                        .foregroundColor(message.sender == .user ? .white : .primary)
+                        .cornerRadius(18)
+                        .cornerRadius(message.sender == .user ? 4 : 18, corners: message.sender == .user ? .bottomRight : .bottomLeft)
+                        
+                        // Controls overlay at bottom of bubble
+                        HStack(spacing: 10) {
+                            if message.sender == .ai {
+                                Button(action: onTranslate) {
+                                    Image(systemName: "translate")
+                                        .font(.caption)
+                                        .foregroundColor(message.translation != nil ? .blue : .gray)
+                                }
+                                
+                                Button(action: onPlayAudio) {
+                                    Image(systemName: "speaker.wave.2")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                            } else {
+                                Spacer()
+                                
+                                Button(action: onPlayAudio) {
+                                    Image(systemName: "speaker.wave.2")
+                                        .font(.caption)
+                                        .foregroundColor(.white)
+                                }
+                                
+                                Button(action: onPlayRecording) {
+                                    Image(systemName: "play")
+                                        .font(.caption)
+                                        .foregroundColor(.white)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
+                }
+                
+                if message.sender == .ai {
+                    Spacer()
                 }
             }
             
-            if message.sender == .ai {
-                Spacer()
+            // Add the three tabs under user messages
+            if message.sender == .user {
+                HStack(spacing: 0) {
+                    TabButton(icon: "pencil", text: "Correct")
+                    
+                    TabButton(icon: "speaker.wave.2", text: "Pronounce")
+                    
+                    TabButton(icon: "waveform", text: "Smooth")
+                }
+                .frame(maxWidth: 240)
+                .background(Color.white)
+                .cornerRadius(20)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
             }
+        }
+    }
+}
+
+// Tab button component for user message actions
+struct TabButton: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        Button(action: {
+            // Action to be implemented
+        }) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(.gray)
+                
+                Text(text)
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
         }
     }
 }

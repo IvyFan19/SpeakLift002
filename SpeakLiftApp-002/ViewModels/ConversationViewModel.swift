@@ -95,10 +95,12 @@ class ConversationViewModel: ObservableObject {
         }
         
         // Configure recording URL handler
-        openAIVTTService.onRecordingURLSet = { [weak self] url in
+        openAIVTTService.onRecordingStarted = { [weak self] in
             DispatchQueue.main.async {
-                print("Recording URL set: \(url.path)")
-                self?.recordingURL = url
+                if let url = self?.openAIVTTService.recordingURL {
+                    print("Recording URL set: \(url.path)")
+                    self?.recordingURL = url
+                }
             }
         }
     }
